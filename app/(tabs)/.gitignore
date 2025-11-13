@@ -1,0 +1,22 @@
+# Node/Expo
+node_modules/
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# Env
+.env
+.env.local
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Databases
+*.db
+*.sqlite
+
+# Logs
+*.log
