@@ -1,0 +1,37 @@
+// src/db/schema.ts
+export const SCHEMA_SQL = `
+CREATE TABLE IF NOT EXISTS accounts (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'TRY',
+  initial_balance INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL CHECK(type IN ('expense','income')),
+  icon TEXT
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id TEXT PRIMARY KEY,
+  account_id TEXT NOT NULL,
+  category_id TEXT,
+  amount INTEGER NOT NULL,           -- kuruş: - gider, + gelir
+  note TEXT,
+  tx_date TEXT NOT NULL,             -- YYYY-MM-DD
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  FOREIGN KEY(account_id) REFERENCES accounts(id),
+  FOREIGN KEY(category_id) REFERENCES categories(id)
+);
+
+CREATE TABLE IF NOT EXISTS budgets (
+  id TEXT PRIMARY KEY,
+  category_id TEXT,
+  month TEXT NOT NULL,               -- YYYY-MM
+  limit_amount INTEGER NOT NULL,
+  FOREIGN KEY(category_id) REFERENCES categories(id)
+);
+`;
