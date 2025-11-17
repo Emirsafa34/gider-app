@@ -2,6 +2,47 @@
 // Web için basit in-memory "db".
 // Sayfa yenilenince sıfırlanır ama geliştirme için yeterli.
 
+// --------------------------
+// DEFAULT CATEGORY LIST
+// --------------------------
+let categories = [
+  { id: "cat-market", name: "Market", type: "expense" },
+  { id: "cat-yemek", name: "Yemek", type: "expense" },
+  { id: "cat-maas", name: "Maaş", type: "income" },
+];
+
+// --------------------------
+// BUDGETS (WEB)
+// --------------------------
+let budgets = [
+  // örnek veri yok, kullanıcı ekleyince dolacak
+  // { id: "b1", month: "2025-11", category_id: "cat-market", limit_amount: 200000 }
+];
+
+export async function listBudgets(month: string) {
+  return budgets.filter((b) => b.month === month);
+}
+
+export async function setBudget(month: string, category_id: string, limit_amount: number) {
+  const existing = budgets.find(
+    (b) => b.month === month && b.category_id === category_id
+  );
+
+  if (existing) {
+    existing.limit_amount = limit_amount;
+  } else {
+    budgets.push({
+      id: "b-" + Math.random().toString(36).slice(2, 9),
+      month,
+      category_id,
+      limit_amount,
+    });
+  }
+}
+
+// --------------------------
+// TRANSACTIONS
+// --------------------------
 type Tx = {
   id: string;
   account_id: string;
@@ -16,8 +57,10 @@ type Tx = {
 
 let transactions: Tx[] = [];
 
+// --------------------------
+// NO-OP SQL (WEB)
+// --------------------------
 async function execAsync(_sql: string) {
-  // şimdilik şema/seed yapmıyoruz, no-op
   return;
 }
 
@@ -50,7 +93,6 @@ async function runAsync(sql: string, params: any[] = []) {
 
 async function getAllAsync(sql: string, params: any[] = []) {
   if (sql.includes("FROM transactions")) {
-    // month filtresi varsa
     if (sql.includes("strftime('%Y-%m', t.tx_date)=?") && params[0]) {
       const month = String(params[0]);
       return transactions.filter((t) => t.tx_date.startsWith(month));
@@ -79,12 +121,39 @@ async function getFirstAsync<T extends { total: number }>(
   return { total: 0 } as T;
 }
 
-// queries.ts'nin beklediği "db" interface'i
+// --------------------------
+// CATEGORY FUNCTIONS (WEB)
+// --------------------------
+export async function listCategories() {
+  return categories;
+}
+
+export async function addCategory(id: string, name: string, type: string) {
+  categories.push({ id, name, type });
+}
+
+export async function deleteCategory(id: string) {
+  categories = categories.filter((c) => c.id !== id);
+}
+
+// --------------------------
+// FINAL DB OBJECT
+// --------------------------
 export async function getDb() {
   return {
+    // SQL-like ops
     execAsync,
     runAsync,
     getAllAsync,
     getFirstAsync,
+
+    // category ops (WEB)
+    listCategories,
+    addCategory,
+    deleteCategory,
+
+    // budget ops (WEB)
+    listBudgets,
+    setBudget,
   };
 }

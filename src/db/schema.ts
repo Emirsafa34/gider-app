@@ -29,9 +29,11 @@ CREATE TABLE IF NOT EXISTS transactions (
 
 CREATE TABLE IF NOT EXISTS budgets (
   id TEXT PRIMARY KEY,
-  category_id TEXT,
+  category_id TEXT NOT NULL,
   month TEXT NOT NULL,               -- YYYY-MM
   limit_amount INTEGER NOT NULL,
-  FOREIGN KEY(category_id) REFERENCES categories(id)
+  FOREIGN KEY(category_id) REFERENCES categories(id),
+  UNIQUE(month, category_id)
 );
+
 `;

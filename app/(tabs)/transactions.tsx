@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import { FlatList, Text, View } from "react-native";
 import TransactionForm from "../../src/components/TransactionForm";
 import { listTransactions } from "../../src/db/queries";
@@ -17,6 +18,13 @@ export default function Transactions() {
   useEffect(() => {
     load();
   }, []);
+
+  // Sekme her odağa geldiğinde yenile
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [month])
+  );
 
   return (
     <View style={{ flex: 1, padding: 16, gap: 16 }}>

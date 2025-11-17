@@ -90,3 +90,93 @@ export async function monthSummary(month: string): Promise<MonthSummary> {
 
   return { income, expense, net };
 }
+// --- CATEGORY QUERIES ---
+
+export async function listCategories() {
+  const db = await getDb();
+
+  // WEB: client.web.ts içindeki categories dizisini döndürür
+  if (db.listCategories) {
+    return db.listCategories();
+  }
+
+  // NATIVE: sqlite sorgusu
+  return db.getAllAsync(
+    `SELECT * FROM categories ORDER BY name ASC;`
+  );
+}
+
+export async function addCategory(id: string, name: string, type: "expense" | "income") {
+  const db = await getDb();
+
+  // WEB: addCategory fonksiyonu varsa onu kullan
+  if (db.addCategory) {
+    return db.addCategory(id, name, type);
+  }
+
+  // NATIVE
+  await db.runAsync(
+    `INSERT INTO categories (id, name, type) VALUES (?,?,?);`,
+    [id, name, type]
+  );
+}
+
+export async function deleteCategory(id: string) {
+  const db = await getDb();
+
+  // WEB
+  if (db.deleteCategory) {
+    return db.deleteCategory(id);
+  }
+
+  // NATIVE
+  await db.runAsync(`DELETE FROM categories WHERE id=?;`, [id]);
+}
+// --- BUDGET QUERIES ---
+
+export async function listBudgets(month: string) {
+  const db = await getDb();
+
+  if (db.listBudgets) {
+    // Web
+    return db.listBudgets(month);
+  }
+
+  // Native SQL
+  return db.getAllAsync(
+    `SELECT * FROM budgets WHERE month=? ORDER BY category_id ASC;`,
+    [month]
+  );
+}
+
+export async function setBudget(month: string, category_id: string, limit_amount: number) {
+  const db = await getDb();
+
+  if (db.setBudget) {
+    // Web
+    return db.setBudget(month, category_id, limit_amount);
+  }
+
+  // Native SQL (upsert)
+  await db.runAsync(
+    `INSERT INTO budgets (month, category_id, limit_amount)
+     VALUES (?,?,?)
+     ON CONFLICT(month, category_id) DO UPDATE SET limit_amount=excluded.limit_amount;`,
+    [month, category_id, limit_amount]
+  );
+}
+// --- MONTHLY SPENT PER CATEGORY ---
+export async function monthSpentByCategory(month: string, category_id: string) {
+  const all = await listTransactions(month);
+
+  let total = 0;
+
+  for (const tx of all) {
+    // sadece giderler (amount < 0)
+    if (tx.category_id === category_id && tx.amount < 0) {
+      total += Math.abs(tx.amount);
+    }
+  }
+
+  return total; // kuruş cinsinden
+}
